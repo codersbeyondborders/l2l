@@ -3,22 +3,30 @@ import { Signer } from '@aws-sdk/rds-signer'
 import { awsCredentialsProvider } from '@vercel/functions/oidc'
 import { attachDatabasePool } from '@vercel/functions'
 
+// The Vercel Aurora PostgreSQL integration prefixes its env vars with AWS_APG_.
+// Fall back to the unprefixed names for local/manual overrides.
+const PGHOST     = process.env.AWS_APG_PGHOST     || process.env.PGHOST     || ''
+const PGUSER     = process.env.AWS_APG_PGUSER     || process.env.PGUSER     || 'postgres'
+const PGDATABASE = process.env.AWS_APG_PGDATABASE || process.env.PGDATABASE || 'postgres'
+const AWS_REGION = process.env.AWS_APG_AWS_REGION || process.env.AWS_REGION || 'us-east-1'
+const AWS_ROLE_ARN = process.env.AWS_APG_AWS_ROLE_ARN || process.env.AWS_ROLE_ARN || ''
+
 const signer = new Signer({
   credentials: awsCredentialsProvider({
-    roleArn: process.env.AWS_ROLE_ARN!,
-    clientConfig: { region: process.env.AWS_REGION },
+    roleArn: AWS_ROLE_ARN,
+    clientConfig: { region: AWS_REGION },
   }),
-  region: process.env.AWS_REGION,
-  hostname: process.env.PGHOST!,
-  username: process.env.PGUSER || 'postgres',
+  region: AWS_REGION,
+  hostname: PGHOST,
+  username: PGUSER,
   port: 5432,
 })
 
 const pool = new Pool({
-  host: process.env.PGHOST,
-  database: process.env.PGDATABASE || 'postgres',
+  host: PGHOST,
+  database: PGDATABASE,
   port: 5432,
-  user: process.env.PGUSER || 'postgres',
+  user: PGUSER,
   password: () => signer.getAuthToken(),
   ssl: { rejectUnauthorized: false },
   // Keep pool small for serverless: each Vercel function invocation spins its

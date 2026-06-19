@@ -16,8 +16,9 @@ import { z } from "zod"
  * Any AI failure automatically falls back to `manual` so no submission is lost.
  */
 
-// Cheapest Bedrock text model available through the Vercel AI Gateway.
-const MODEL = "amazon/nova-micro"
+// AWS Bedrock (Amazon Nova Micro) via Vercel AI Gateway.
+// AI_2 env var holds the model string; falls back to the gateway identifier.
+const MODEL = process.env.AI_2 || "amazon/nova-micro"
 
 export type ModerationLevel = "lenient" | "standard" | "strict"
 

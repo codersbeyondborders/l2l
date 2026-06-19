@@ -11,24 +11,29 @@ if (!file) {
   process.exit(1)
 }
 
-const region = process.env.AWS_REGION
+const region   = process.env.AWS_APG_AWS_REGION  || process.env.AWS_REGION  || 'us-east-1'
+const roleArn   = process.env.AWS_APG_AWS_ROLE_ARN || process.env.AWS_ROLE_ARN || ''
+const pghost    = process.env.AWS_APG_PGHOST     || process.env.PGHOST     || ''
+const pguser    = process.env.AWS_APG_PGUSER     || process.env.PGUSER     || 'postgres'
+const pgdb      = process.env.AWS_APG_PGDATABASE || process.env.PGDATABASE || 'postgres'
+
 const signer = new Signer({
   credentials: awsCredentialsProvider({
-    roleArn: process.env.AWS_ROLE_ARN,
+    roleArn,
     clientConfig: { region },
   }),
   region,
-  hostname: process.env.PGHOST,
-  username: process.env.PGUSER || 'postgres',
+  hostname: pghost,
+  username: pguser,
   port: 5432,
 })
 
 const token = await signer.getAuthToken()
 const client = new pg.Client({
-  host: process.env.PGHOST,
-  database: process.env.PGDATABASE || 'postgres',
+  host: pghost,
+  database: pgdb,
   port: 5432,
-  user: process.env.PGUSER || 'postgres',
+  user: pguser,
   password: token,
   ssl: { rejectUnauthorized: false },
 })
